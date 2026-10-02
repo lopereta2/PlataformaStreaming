@@ -1,6 +1,5 @@
-
 CREATE DATABASE PlataformaStreamingDB
-GO
+GO 
 USE PlataformaStreamingDB;
 GO
 
@@ -20,6 +19,17 @@ CREATE TABLE [Usuarios] (
 	[Rol] INT NOT NULL REFERENCES [Roles]([IDRol]),
 );
 
+USE PlataformaStreamingDB;
+
+SELECT *
+FROM Usuarios
+WHERE Correo = 'Simon@gmail.com';
+
+USE PlataformaStreamingDB;
+
+DELETE FROM Usuarios
+WHERE Correo = 'Simon@gmail.com';
+
 CREATE TABLE [PlanesSuscripcion] (
 	[IDPlan] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
 	[Nombre] NVARCHAR(50) NOT NULL UNIQUE,
@@ -30,6 +40,11 @@ CREATE TABLE [PlanesSuscripcion] (
 	CONSTRAINT CHK_Nombre_Plan CHECK (Nombre IN ('Básico','Estándar','Premium')),
 	CONSTRAINT CHK_Resolucion CHECK (ResolucionMaxima IN ('720p','1080p','4k'))
 );
+
+USE PlataformaStreamingDB;
+
+DELETE FROM PlanesSuscripcion
+WHERE Nombre = 'Premium';
 
 CREATE TABLE [PagosSuscripcion] (
 	[IDPago] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
@@ -68,9 +83,9 @@ CREATE TABLE [PeliculasSeries] (
 );
 
 CREATE TABLE [ContenidoGeneros] (
+	[IDContenidoGenero] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
 	[PeliculaSerie] INT NOT NULL REFERENCES [PeliculasSeries]([IDContenido]),
 	[Genero] INT NOT NULL REFERENCES [Generos]([IDGenero]),
-	CONSTRAINT [IDContenidoGenero] PRIMARY KEY ([PeliculasSeries], [Generos]),
 );
 
 CREATE TABLE [Temporadas] (
@@ -111,6 +126,15 @@ CREATE TABLE [Idiomas] (
 	[CodigoIso] NVARCHAR(15) NOT NULL UNIQUE,
 );
 
+USE PlataformaStreamingDB;
+
+SELECT *
+FROM Idiomas
+WHERE CodigoIso = 'ES';
+
+DELETE FROM Idiomas
+WHERE CodigoIso = 'ES';
+
 CREATE TABLE [AudioSubtitulosContenido] (
 	[IDConfig] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
 	[TipoConfig] NVARCHAR(50) NOT NULL,
@@ -119,6 +143,13 @@ CREATE TABLE [AudioSubtitulosContenido] (
 
 	CONSTRAINT CHK_TipoConfig CHECK (TipoConfig IN ('Audio','Subtitulos'))
 );
+
+SELECT 
+    COLUMN_NAME,
+    DATA_TYPE
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_NAME = 'AudioSubtitulosContenido'
+ORDER BY ORDINAL_POSITION;
 
 CREATE TABLE [ServidoresCDN] (
 	[ID_CDN] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
@@ -129,8 +160,24 @@ CREATE TABLE [ServidoresCDN] (
 	CONSTRAINT CHK_Servidor_Estado CHECK (Estado IN ('Activo','Apagado','Mantenimiento'))
 );
 
+USE PlataformaStreamingDB;
+GO
+
+DELETE FROM ServidoresCDN
+WHERE Nombre = 'StreamingServer';
+
+USE PlataformaStreamingDB;
+GO
+
+SELECT *
+FROM ServidoresCDN
+WHERE Nombre = 'StreamingServer';
+
 ALTER TABLE ServidoresCDN
 ALTER COLUMN EspacioGeografico NVARCHAR(100) NOT NULL;
+
+ALTER TABLE ServidoresCDN
+ALTER COLUMN Estado NVARCHAR(100) NOT NULL;
 
 CREATE TABLE [HistorialReproduccion] (
 	[IDHistorial] INT NOT NULL IDENTITY(1, 1) PRIMARY KEY,
@@ -180,3 +227,9 @@ CREATE TABLE [TicketsSoporte] (
 	CONSTRAINT CHK_Ticket_Estado CHECK (Estado IN ('Abierto','En proceso','Resuelto'))
 );
 
+USE PlataformaStreamingDB;
+GO
+
+SELECT TABLE_SCHEMA, TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME = 'ContenidoGeneros';
