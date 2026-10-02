@@ -1,0 +1,107 @@
+﻿using lib_PlataformaStreaming.Entidades;
+using lib_PlataformaStreaming.Implementaciones;
+using lib_PlataformaStreaming.Interfaces;
+using lib_PlataformaStreaming.Nucleo;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Text;
+
+namespace PruebasUnitarias
+{
+    [TestClass]
+    public class PagosSuscripcionPruebas
+    {
+        private IConexion conexion;
+        private PagosSuscripcion? entidad = null;
+
+        public PagosSuscripcionPruebas()
+        {
+            this.conexion = new Conexion();
+            conexion.StringConexion = DatosGenerales.StringConexion();
+        }
+
+        [TestMethod]
+        public void Execute()
+        {
+            Insertar();
+            Consultar();
+            Actualizar();
+            Borrar();
+        }
+
+        public void Insertar()
+        {
+            var rol = this.conexion.Roles!
+            .FirstOrDefault(r => r.Nombre == "Usuario");
+
+            if (rol == null)
+            {
+                rol = new Roles()
+                {
+                    Nombre = "Usuario"
+                };
+
+                this.conexion.Roles!.Add(rol);
+                this.conexion.SaveChanges();
+            }
+
+            var usuario = new Usuarios()
+            {
+                Nombre = "Lucia",
+                Correo = "Lucia@gmail.com",
+                Contraseña = Encoding.UTF8.GetBytes("123456"),
+                FechaRegistro = new DateTime(2024, 07, 24),
+                _Rol = rol
+            };
+
+            this.conexion.Usuarios!.Add(usuario);
+
+            var plan = new PlanesSuscripcion()
+            {
+                Nombre = "Premium",
+                Precio = 40000,
+                ResolucionMaxima = "4k",
+                PantallasSimultaneas = 6
+            };
+
+            this.conexion.PlanesSuscripcion!.Add(plan);
+            this.conexion.SaveChanges();
+
+            this.entidad = new PagosSuscripcion()
+            {
+                Monto = 40000,
+                FechaPago = new DateTime(2026, 05, 18),
+                EstadoPago = "Aprobado",
+                _Usuario = usuario,
+                _PlanSuscripcion = plan
+            };
+
+            this.conexion.PagosSuscripcion!.Add(this.entidad);
+            this.conexion.SaveChanges();
+        }
+
+        public void Consultar()
+        {
+            var lista = this.conexion.PagosSuscripcion!.ToList();
+            if (lista.Count <= 0)
+                throw new Exception("Lista vacia");
+        }
+
+        private void Actualizar()
+        {
+            this.entidad!.EstadoPago = "Pendiente";
+
+            var entry = this.conexion!.Entry<PagosSuscripcion>(this.entidad);
+            entry.State = EntityState.Modified;
+            this.conexion!.SaveChanges();
+        }
+
+        private void Borrar()
+        {
+            this.conexion.PagosSuscripcion!.Remove(this.entidad!);
+            this.conexion.SaveChanges();
+        }
+    }
+}

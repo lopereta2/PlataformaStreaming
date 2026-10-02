@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="lib_PlataformaStreaming/lib_PlataformaStreaming.csproj" />
+  <Project Path="presentacion_consola/presentacion_consola.csproj" />
+  <Project Path="PruebasUnitarias/PruebasUnitarias.csproj" Id="8d686cdf-a63a-469c-b2bb-c705e41c1fea" />
+</Solution>
