@@ -22,16 +22,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+                ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Usuario");
+                .FirstOrDefault(r => r.Nombre == "Usuario");
 
             if (rol == null)
             {
@@ -55,18 +68,12 @@ namespace PruebasUnitarias
                     Correo = "Simon@gmail.com",
                     Contraseña = Encoding.UTF8.GetBytes("Simon2321H.HW2"),
                     FechaRegistro = new DateTime(2025, 12, 01),
-                    RolId = rol.IDRol
+                    IDRol = rol.IDRol
                 };
 
                 this.conexion.Usuarios!.Add(usuario);
                 this.conexion.SaveChanges();
             }
-
-            // IMPORTANTE: este usuario ya existe en SQL Server
-            this.conexion.Entry(usuario).State = EntityState.Unchanged;
-
-
-            int usuarioId = usuario.IDUsuario;
 
             var perfil = this.conexion.Perfiles!
                 .FirstOrDefault(p => p.Nombre == "PerfilSimon");
@@ -78,43 +85,23 @@ namespace PruebasUnitarias
                     Nombre = "PerfilSimon",
                     AvatarURL = "https://avatar.com/3",
                     EsInfantil = false,
-                    UsuarioId = usuarioId
+                    IDUsuario = usuario.IDUsuario
                 };
 
                 this.conexion.Perfiles!.Add(perfil);
-
-                var contexto = (DbContext)this.conexion;
-
-                foreach (var entry in contexto.ChangeTracker.Entries())
-                {
-                    Console.WriteLine(
-                        $"ANTES DEL SAVE - Entidad: {entry.Entity.GetType().Name} | Estado: {entry.State}");
-                }
-
                 this.conexion.SaveChanges();
             }
 
             var contenido = new PeliculasSeries()
             {
                 Titulo = "Juego de tronos",
-                Descripcion = "En un escenario que recuerda a la Europa Medieval, siete familias luchan por el control de Westeros" +
-                " y usarán todos los medios a su alcance.",
+                Descripcion = "En un escenario que recuerda a la Europa Medieval, siete familias luchan por el control de Westeros y usarán todos los medios a su alcance.",
                 Tipo = "Serie",
                 AnioLanzamiento = 2011,
                 ClasificacionEdad = "16+"
             };
 
             this.conexion.PeliculasSeries!.Add(contenido);
-            this.conexion.SaveChanges();
-
-            var contexto = (DbContext)this.conexion;
-
-            foreach (var entry in contexto.ChangeTracker.Entries())
-            {
-                Console.WriteLine(
-                    $"Entidad: {entry.Entity.GetType().Name} | Estado: {entry.State}");
-            }
-
             this.conexion.SaveChanges();
 
             var temporada = new Temporadas()
@@ -144,9 +131,17 @@ namespace PruebasUnitarias
                 ProgresoSegundo = 27,
                 UltimaReproduccion = new DateTime(2026, 10, 01),
                 Completado = false,
+
+                // Perfil que está reproduciendo
                 _Perfil = perfil,
+
+                // Contenido principal
+                _PeliculaSerie = contenido,
+
+                // Episodio reproducido
                 _Episodio = episodio
             };
+
             this.conexion.HistorialReproduccion!.Add(this.entidad);
             this.conexion.SaveChanges();
         }
@@ -154,6 +149,7 @@ namespace PruebasUnitarias
         public void Consultar()
         {
             var lista = this.conexion.HistorialReproduccion!.ToList();
+
             if (lista.Count <= 0)
                 throw new Exception("Lista vacia");
         }
@@ -163,9 +159,12 @@ namespace PruebasUnitarias
             this.entidad!.ProgresoSegundo = 50;
             this.entidad!.Completado = true;
 
-            var entry = this.conexion!.Entry<HistorialReproduccion>(this.entidad);
+            var entry =
+                this.conexion.Entry<HistorialReproduccion>(this.entidad);
+
             entry.State = EntityState.Modified;
-            this.conexion!.SaveChanges();
+
+            this.conexion.SaveChanges();
         }
 
         private void Borrar()

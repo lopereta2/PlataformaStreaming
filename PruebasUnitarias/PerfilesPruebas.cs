@@ -24,16 +24,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+                ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Administrador");
+                .FirstOrDefault(r => r.Nombre == "Administrador");
 
             if (rol == null)
             {
@@ -45,9 +58,6 @@ namespace PruebasUnitarias
                 this.conexion.Roles!.Add(rol);
                 this.conexion.SaveChanges();
             }
-
-            this.conexion.Roles!.Add(rol);
-            this.conexion.SaveChanges();
 
             var usuario = new Usuarios()
             {
@@ -68,6 +78,7 @@ namespace PruebasUnitarias
                 EsInfantil = false,
                 _Usuario = usuario
             };
+
             this.conexion.Perfiles!.Add(this.entidad);
             this.conexion.SaveChanges();
         }

@@ -28,8 +28,6 @@ namespace lib_PlataformaStreaming.Interfaces
         DbSet<CalificacionesResenias>? CalificacionesResenias { get; set; }
         DbSet<DispositivosConectados>? DispositivosConectados { get; set; }
         DbSet<TicketsSoporte>? TicketsSoporte { get; set; }
-
-        void Attach(Usuarios usuario);
         EntityEntry<T> Entry<T>(T entity) where T : class;
         int SaveChanges();
     }

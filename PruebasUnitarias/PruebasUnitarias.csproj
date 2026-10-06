@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\lib_PlataformaStreaming\lib_PlataformaStreaming.csproj" />
+    <ProjectReference Include="..\presentacion_consola\presentacion_consola.csproj" />
   </ItemGroup>
 
   <ItemGroup>

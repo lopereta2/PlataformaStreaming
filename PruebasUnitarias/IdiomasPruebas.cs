@@ -32,13 +32,20 @@ namespace PruebasUnitarias
 
         public void Insertar()
         {
-            this.entidad = new Idiomas()
+            this.entidad = this.conexion.Idiomas!
+            .FirstOrDefault(i => i.CodigoIso == "ES");
+
+            if (this.entidad == null)
             {
-                Nombre = "Español",
-                CodigoIso = "ES"
-            };
-            this.conexion.Idiomas!.Add(this.entidad);
-            this.conexion.SaveChanges();
+                this.entidad = new Idiomas()
+                {
+                    Nombre = "Español",
+                    CodigoIso = "ES"
+                };
+
+                this.conexion.Idiomas!.Add(this.entidad);
+                this.conexion.SaveChanges();
+            }
         }
 
         public void Consultar()

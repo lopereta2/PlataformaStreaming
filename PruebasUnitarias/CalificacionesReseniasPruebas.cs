@@ -24,16 +24,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+                ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Usuario");
+                .FirstOrDefault(r => r.Nombre == "Usuario");
 
             if (rol == null)
             {
@@ -46,17 +59,23 @@ namespace PruebasUnitarias
                 this.conexion.SaveChanges();
             }
 
-            var usuario = new Usuarios()
-            {
-                Nombre = "Felipe",
-                Correo = "Felipe@gmail.com",
-                Contraseña = Encoding.UTF8.GetBytes("123456ZSgHa"),
-                FechaRegistro = new DateTime(2025, 12, 01),
-                _Rol = rol
-            };
+            var usuario = this.conexion.Usuarios!
+                .FirstOrDefault(u => u.Correo == "Felipe@gmail.com");
 
-            this.conexion.Usuarios!.Add(usuario);
-            this.conexion.SaveChanges();
+            if (usuario == null)
+            {
+                usuario = new Usuarios()
+                {
+                    Nombre = "Felipe",
+                    Correo = "Felipe@gmail.com",
+                    Contraseña = Encoding.UTF8.GetBytes("123456ZSgHa"),
+                    FechaRegistro = new DateTime(2025, 12, 01),
+                    _Rol = rol
+                };
+
+                this.conexion.Usuarios!.Add(usuario);
+                this.conexion.SaveChanges();
+            }
 
             var perfil = new Perfiles()
             {
@@ -67,12 +86,12 @@ namespace PruebasUnitarias
             };
 
             this.conexion.Perfiles!.Add(perfil);
+            this.conexion.SaveChanges();
 
             var contenido = new PeliculasSeries()
             {
                 Titulo = "El juego del calamar",
-                Descripcion = "Cientos de jugadores cortos de dinero aceptan una extraña invitación a competir en juegos infantiles." +
-                " Adentro les espera un premio irresistible... con un riesgo mortal.",
+                Descripcion = "Cientos de jugadores cortos de dinero aceptan una extraña invitación a competir en juegos infantiles. Adentro les espera un premio irresistible... con un riesgo mortal.",
                 Tipo = "Serie",
                 AnioLanzamiento = 2021,
                 ClasificacionEdad = "16+"
@@ -80,7 +99,6 @@ namespace PruebasUnitarias
 
             this.conexion.PeliculasSeries!.Add(contenido);
             this.conexion.SaveChanges();
-
 
             this.entidad = new CalificacionesResenias()
             {
@@ -98,6 +116,7 @@ namespace PruebasUnitarias
         public void Consultar()
         {
             var lista = this.conexion.CalificacionesResenias!.ToList();
+
             if (lista.Count <= 0)
                 throw new Exception("Lista vacia");
         }
@@ -105,11 +124,12 @@ namespace PruebasUnitarias
         private void Actualizar()
         {
             this.entidad!.Calificacion = 4;
-            this.entidad!.Comentario = "Actualización de la reseña";
+            this.entidad!.Comentario = "Actualizacion de la reseña";
 
-            var entry = this.conexion!.Entry<CalificacionesResenias>(this.entidad);
+            var entry = this.conexion.Entry<CalificacionesResenias>(this.entidad);
             entry.State = EntityState.Modified;
-            this.conexion!.SaveChanges();
+
+            this.conexion.SaveChanges();
         }
 
         private void Borrar()

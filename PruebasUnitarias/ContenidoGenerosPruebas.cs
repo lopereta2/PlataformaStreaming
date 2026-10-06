@@ -59,8 +59,8 @@ namespace PruebasUnitarias
 
             this.entidad = new ContenidoGeneros()
             {
-                PeliculaSerieId = contenido.IDContenido,
-                GeneroId = genero.IDGenero,
+                IDPeliculaSerie = contenido.IDContenido,
+                IDGenero = genero.IDGenero,
                 _PeliculaSerie = contenido,
                 _Genero = genero
             };

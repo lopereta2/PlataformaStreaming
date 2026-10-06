@@ -22,16 +22,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+                ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Usuario");
+                .FirstOrDefault(r => r.Nombre == "Usuario");
 
             if (rol == null)
             {
@@ -44,17 +57,23 @@ namespace PruebasUnitarias
                 this.conexion.SaveChanges();
             }
 
-            var usuario = new Usuarios()
-            {
-                Nombre = "Conni",
-                Correo = "Conni@gmail.com",
-                Contraseña = Encoding.UTF8.GetBytes("12Zsg33_saZ"),
-                FechaRegistro = new DateTime(2025, 12, 01),
-                _Rol = rol
-            };
+            var usuario = this.conexion.Usuarios!
+                .FirstOrDefault(u => u.Correo == "Conni@gmail.com");
 
-            this.conexion.Usuarios!.Add(usuario);
-            this.conexion.SaveChanges();
+            if (usuario == null)
+            {
+                usuario = new Usuarios()
+                {
+                    Nombre = "Conni",
+                    Correo = "Conni@gmail.com",
+                    Contraseña = Encoding.UTF8.GetBytes("12Zsg33_saZ"),
+                    FechaRegistro = new DateTime(2025, 12, 01),
+                    _Rol = rol
+                };
+
+                this.conexion.Usuarios!.Add(usuario);
+                this.conexion.SaveChanges();
+            }
 
             var perfil = new Perfiles()
             {
@@ -75,6 +94,7 @@ namespace PruebasUnitarias
                 UltimoAcceso = new DateTime(2026, 09, 04),
                 _Usuario = usuario
             };
+
             this.conexion.DispositivosConectados!.Add(this.entidad);
             this.conexion.SaveChanges();
         }
@@ -82,6 +102,7 @@ namespace PruebasUnitarias
         public void Consultar()
         {
             var lista = this.conexion.DispositivosConectados!.ToList();
+
             if (lista.Count <= 0)
                 throw new Exception("Lista vacia");
         }
@@ -90,9 +111,10 @@ namespace PruebasUnitarias
         {
             this.entidad!.Nombre = "Móvil";
 
-            var entry = this.conexion!.Entry<DispositivosConectados>(this.entidad);
+            var entry = this.conexion.Entry<DispositivosConectados>(this.entidad);
             entry.State = EntityState.Modified;
-            this.conexion!.SaveChanges();
+
+            this.conexion.SaveChanges();
         }
 
         private void Borrar()

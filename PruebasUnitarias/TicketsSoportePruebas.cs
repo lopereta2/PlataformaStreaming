@@ -22,16 +22,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+        ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Usuario");
+        .FirstOrDefault(r => r.Nombre == "Usuario");
 
             if (rol == null)
             {
@@ -44,26 +57,33 @@ namespace PruebasUnitarias
                 this.conexion.SaveChanges();
             }
 
-            var usuario = new Usuarios()
-            {
-                Nombre = "Eliza",
-                Correo = "Eliza@gmail.com",
-                Contraseña = Encoding.UTF8.GetBytes("ElizaPS3-54sS"),
-                FechaRegistro = new DateTime(2025, 12, 01),
-                _Rol = rol
-            };
+            var usuario = this.conexion.Usuarios!
+                .FirstOrDefault(u => u.Correo == "Eliza@gmail.com");
 
-            this.conexion.Usuarios!.Add(usuario);
-            this.conexion.SaveChanges();
+            if (usuario == null)
+            {
+                usuario = new Usuarios()
+                {
+                    Nombre = "Eliza",
+                    Correo = "Eliza@gmail.com",
+                    Contraseña = Encoding.UTF8.GetBytes("ElizaPS3-54sS"),
+                    FechaRegistro = new DateTime(2025, 12, 01),
+                    _Rol = rol
+                };
+
+                this.conexion.Usuarios!.Add(usuario);
+                this.conexion.SaveChanges();
+            }
 
             this.entidad = new TicketsSoporte()
             {
                 Asunto = "Error de Inicio de Sesion",
-                Descripcion = "Al querer iniciar sesion me sale una alerta que dice: " + "Error de Inicio de Sesion",
+                Descripcion = "Al querer iniciar sesion me sale una alerta que dice: Error de Inicio de Sesion",
                 Estado = "Resuelto",
                 Fecha = new DateTime(2025, 04, 01),
                 _Usuario = usuario
             };
+
             this.conexion.TicketsSoporte!.Add(this.entidad);
             this.conexion.SaveChanges();
         }

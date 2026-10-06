@@ -1,11 +1,12 @@
 ﻿using lib_PlataformaStreaming.Implementaciones;
 using lib_PlataformaStreaming.Interfaces;
+using lib_PlataformaStreaming.Nucleo;
 using Microsoft.EntityFrameworkCore;
 
 try
 {
     IConexion conexion = new Conexion();
-    conexion.StringConexion = "Server=DESKTOP-1FBES6U\\DEV;Database=PlataformaStreamingDB;Integrated Security=True;TrustServerCertificate=true;";
+    conexion.StringConexion = DatosGenerales.StringConexion();
     
     var lista_roles = conexion.Roles!.ToList();
 

@@ -3,9 +3,6 @@ using lib_PlataformaStreaming.Implementaciones;
 using lib_PlataformaStreaming.Interfaces;
 using lib_PlataformaStreaming.Nucleo;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
 using System.Text;
 
 namespace PruebasUnitarias
@@ -25,16 +22,29 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction =
+                ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
             var rol = this.conexion.Roles!
-            .FirstOrDefault(r => r.Nombre == "Usuario");
+                .FirstOrDefault(r => r.Nombre == "Usuario");
 
             if (rol == null)
             {
@@ -47,27 +57,31 @@ namespace PruebasUnitarias
                 this.conexion.SaveChanges();
             }
 
-            var usuario = new Usuarios()
+            var usuario = this.conexion.Usuarios!
+                .FirstOrDefault(u => u.Correo == "Lucia@gmail.com");
+
+            if (usuario == null)
             {
-                Nombre = "Lucia",
-                Correo = "Lucia@gmail.com",
-                Contraseña = Encoding.UTF8.GetBytes("123456"),
-                FechaRegistro = new DateTime(2024, 07, 24),
-                _Rol = rol
-            };
+                usuario = new Usuarios()
+                {
+                    Nombre = "Lucia",
+                    Correo = "Lucia@gmail.com",
+                    Contraseña = Encoding.UTF8.GetBytes("123456"),
+                    FechaRegistro = new DateTime(2024, 07, 24),
+                    _Rol = rol
+                };
 
-            this.conexion.Usuarios!.Add(usuario);
+                this.conexion.Usuarios!.Add(usuario);
+                this.conexion.SaveChanges();
+            }
 
-            var plan = new PlanesSuscripcion()
+            var plan = this.conexion.PlanesSuscripcion!
+                .FirstOrDefault(p => p.Nombre == "Premium");
+
+            if (plan == null)
             {
-                Nombre = "Premium",
-                Precio = 40000,
-                ResolucionMaxima = "4k",
-                PantallasSimultaneas = 6
-            };
-
-            this.conexion.PlanesSuscripcion!.Add(plan);
-            this.conexion.SaveChanges();
+                throw new Exception("No existe el plan Premium");
+            }
 
             this.entidad = new PagosSuscripcion()
             {
@@ -85,6 +99,7 @@ namespace PruebasUnitarias
         public void Consultar()
         {
             var lista = this.conexion.PagosSuscripcion!.ToList();
+
             if (lista.Count <= 0)
                 throw new Exception("Lista vacia");
         }
@@ -93,9 +108,10 @@ namespace PruebasUnitarias
         {
             this.entidad!.EstadoPago = "Pendiente";
 
-            var entry = this.conexion!.Entry<PagosSuscripcion>(this.entidad);
+            var entry = this.conexion.Entry<PagosSuscripcion>(this.entidad);
             entry.State = EntityState.Modified;
-            this.conexion!.SaveChanges();
+
+            this.conexion.SaveChanges();
         }
 
         private void Borrar()

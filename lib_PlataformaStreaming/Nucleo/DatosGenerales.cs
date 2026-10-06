@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace lib_PlataformaStreaming.Nucleo
+﻿namespace lib_PlataformaStreaming.Nucleo
 {
     public class DatosGenerales
     {

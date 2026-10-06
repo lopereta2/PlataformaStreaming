@@ -21,18 +21,40 @@ namespace PruebasUnitarias
         [TestMethod]
         public void Execute()
         {
-            Insertar();
-            Consultar();
-            Actualizar();
-            Borrar();
+            using var transaction = ((DbContext)this.conexion).Database.BeginTransaction();
+
+            try
+            {
+                Insertar();
+                Consultar();
+                Actualizar();
+                Borrar();
+
+                transaction.Rollback();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
 
         public void Insertar()
         {
+            var existente = this.conexion.Roles!
+                .FirstOrDefault(r => r.Nombre == "AdministradorPrueba");
+
+            if (existente != null)
+            {
+                this.conexion.Roles!.Remove(existente);
+                this.conexion.SaveChanges();
+            }
+
             this.entidad = new Roles()
             {
-                Nombre = "Administrador"
+                Nombre = "AdministradorPrueba"
             };
+
             this.conexion.Roles!.Add(this.entidad);
             this.conexion.SaveChanges();
         }
@@ -46,7 +68,7 @@ namespace PruebasUnitarias
 
         private void Actualizar()
         {
-            this.entidad!.Nombre = "Usuario";
+            this.entidad!.Nombre = "UsuarioPrueba";
 
             var entry = this.conexion!.Entry<Roles>(this.entidad);
             entry.State = EntityState.Modified;

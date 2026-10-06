@@ -1,9 +1,6 @@
 ﻿using lib_PlataformaStreaming.Entidades;
 using lib_PlataformaStreaming.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace lib_PlataformaStreaming.Implementaciones
 {
@@ -15,10 +12,6 @@ namespace lib_PlataformaStreaming.Implementaciones
         {
             optionsBuilder.UseSqlServer(this.StringConexion!, p => { });
             optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.TrackAll);
-        }
-        public void Attach(Usuarios usuario)
-        {
-            base.Attach(usuario);
         }
 
         public DbSet<Roles>? Roles { get; set; }
